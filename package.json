@@ -1,0 +1,23 @@
+{
+  "name": "simple_chat",
+  "version": "1.0.0",
+  "description": "a simple chat system",
+  "main": "index.js",
+  "scripts": {
+    "test": "1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "none"
+  },
+  "keywords": [
+    "seng513"
+  ],
+  "author": "Brandon Sin",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "ejs": "^3.0.1",
+    "express": "^4.17.1",
+    "socket.io": "^2.3.0"
+  }
+}

@@ -1,0 +1,169 @@
+<!--Brandon Sin 30012020 SENG 513 
+Reference to: https://itnext.io/build-a-group-chat-app-in-30-lines-using-node-js-15bfe7a2417b
+-->
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Live Chat</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font: 13px Helvetica, Arial; 
+                background-color: lightgrey;
+        }
+
+        #chat{
+          overflow: scroll;
+          height: 768px;
+        }
+
+        form { background: #fff; padding: 3px; position: fixed; bottom: 0; width: 100%; border-color: #000; border-top-style: solid; border-top-width: 1px;}
+        form input { border-style: solid; border-width: 1px; padding: 10px; width: 85%; margin-right: .5%; }
+        form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; margin-left: 2%; }
+        #messages { list-style-type: none; margin: 0; padding: 0; }
+        #messages li { padding: 5px 10px; }
+        #messages li:nth-child(odd) { background: #eee; }
+
+        #users { list-style-type: none; margin: 0; padding: 0; 
+                width: 80%;
+                margin: auto;
+                font-size: 15px;
+                float: right;
+        }
+        #users li { padding: 5px 10px; }
+        #users li:nth-child(odd) { background: #eee; }
+        .bar {
+          background-color: #6ed8ff;
+	        padding-top: 10px;
+          min-height: 80px;
+	        border-bottom:#ff6ea3 3px solid;
+	        border-top:#ff6ea3 3px solid;
+        }
+        .theUser {
+          background-color: #6ed8ff;
+        	padding-top: 10px;
+        	min-height: 50px;
+	        border-bottom:#ff6ea3 3px solid;
+
+        }
+        #currentUser { list-style-type: none; margin: 0; padding: 0; font-size: 15px; }
+        #currentUser li { padding: 5px 10px; }
+
+
+        
+        
+    </style>
+    <script src="../../socket.io/socket.io.js"></script>
+    <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+  </head>
+  <body>
+    <div class = "bar">
+      <h1>Current Users</h1>
+      <ul id = "users">
+      </ul>
+    </div>
+    <div class = "theUser">
+      <ul id = "currentUser">
+
+      </ul>
+
+    </div>
+      
+    <div id = "chat">
+      <ul id="messages"></ul>
+
+    </div>
+   
+    <form action="/" method="POST" id="chatForm">
+      <input id="txt" autocomplete="off" autofocus="on" placeholder="type your message here..." /><button>Send</button>
+    </form>
+    <script>
+          var user = "none";
+
+          var socket = io.connect('http://localhost:8080');
+          // submit text message without reload/refresh the page
+          console.log('Connected to server')
+            
+          $('form').submit(function(e){
+              e.preventDefault(); // prevents page reloading
+              console.log('User: ' + user);
+              var string = $('#txt').val();
+              var preString = "none";
+              
+              var color = $('#txt').val();
+              var colorString = "none";
+            
+              // change color of name
+              if(color.startsWith("/nickcolor ")){
+                colorString = color.slice(11, color.length);
+
+                if(colorString.length == 6){
+                  socket.emit('color_change', colorString);
+                  $('#txt').val('')
+                }
+                else{
+                  alert("Color must have 6 characters");
+                  $('#txt').val('/nickcolor');
+                  return false
+                }
+              }
+
+              //name change
+              if(string.startsWith("/nick ")){
+                preString = string.slice(6, string.length);
+
+                //if name is less than 0 characters prevent user from changing
+                if(preString.length == 0){
+                  alert("Name must have at least 1 character");
+                  $('#txt').val('/nick');
+                  return false
+                }
+                //otherwise emit name to server and clear textbox
+                else{
+                  socket.emit('name_change', preString);
+                  $('#txt').val('');
+                }
+              }
+              else{
+
+                //send message to server
+                socket.emit('chat_message', $('#txt').val(), user);
+                $('#txt').val('');
+                //scroll message
+                var sh = document.getElementById('chat').scrollHeight
+                $('#chat').animate({scrollTop: sh}, 'slow')
+
+                return false;
+
+              }
+              
+            });
+
+            // append the chat text message
+            socket.on('chat_message', function(msg){
+
+                $('#messages').append($('<li>').html(msg)); 
+            });
+
+            // append text if someone is online
+            socket.on('is_online', function(username) {
+                $('#messages').append($('<li>').html(username));
+            });
+            
+            //userList
+            socket.on('active', function(userListAsString) {
+                $('#users').html(userListAsString);
+            });
+
+            //shows name of yourself
+            socket.on('the_user', function(username) {
+                user = username;
+                $('#currentUser').html("You are " + username);
+                return user;
+            });
+
+
+          
+
+    </script>
+  </body>
+</html>
